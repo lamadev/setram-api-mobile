@@ -1,0 +1,6 @@
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^codes/serveur/api/pinlog/(.*)/(.*)/(.*)$ codes/serveur/api/pinController.php?account=$1&old=$2&new=$3
+RewriteRule ^codes/serveur/api/login$ codes/serveur/api/loginController.php?phone=$1&pin=$2
+RewriteRule ^codes/serveur/api/transacts/(.*)$ codes/serveur/api/transactsController.php?id_account=$1
+RewriteRule ^codes/serveur/api/newtransact$ codes/serveur/api/transactsController.php?from_account=$1&to_account=$2&amount=$3

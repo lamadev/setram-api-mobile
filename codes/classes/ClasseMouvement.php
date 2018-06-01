@@ -1,0 +1,3284 @@
+<?php
+include_once ("codes/classes/ClasseConnexion.php");
+class Mouvement{
+                  private $IdMouv;
+				  private $DateMouv;
+				  private $Montant;
+				  private $EtatMouv;
+				  private $Type;
+				  private $Sens;
+				  private $CodeMonnaie;
+				  //private $Idcommission;
+				  private $IdAgence;
+				  private $IdAgent;
+				 
+				 
+				  //creation de la fonction Créer Categorie
+				  
+				  function fx_EnregistrerMouvement($Montant,$CodeMonnaie,$Type,$Sens,$IdAgence,$IdAgent,$DateMouv,$EtatMouv){   
+
+					  $this->Montant=$Montant;
+					  $this->EtatMouv=$EtatMouv;
+					  $this->Type=$Type;
+					  $this->Sens=$Sens;
+					  $this->CodeDevise=$CodeMonnaie;
+					  //$this->IdCommission=$idcommission;
+					  $this->IdAgence=$IdAgence;
+					  $this->IdAgent=$IdAgent;
+					  
+					  
+					  //Création de la Requete 
+					  $requete='insert into mouvement(Montant,CodeMonnaie,Type,Sens,IdAgence,IdAgent,DateMouv,EtatMouv) values("'. $this->Montant.'","'. $this->CodeDevise.'","'. $this->Type.'","'. $this->Sens.'","'. $this->IdAgence.'","'. $this->IdAgent.'",CURRENT_TIMESTAMP,1)';
+						//echo $requete;
+					//echo "#".$requete."#"; 
+					   //insertion des information dans la base de donnees ou preparation de la requete
+					 $conn=new connect();// preperation de la conexion
+					 $resultat=$conn -> fx_ecriture($requete);// execution de la requete
+					 if ($resultat){
+						return $resultat;
+					 }
+					 else{
+						return false;
+					 }
+						  
+				 }
+				 
+				 //Création de la fonction Modifier Mouvement
+					  function fx_ModifierMouvement($idmouv,$datemouv,$montant,$etatmouv,$type,$sens,$codedevise,$idcommission,$idagence){
+						  $this->IdMouv=$idmouv;
+						  $this->Montant=$montant;
+						  $this->EtatMouv=$etatmouv;
+						  $this->Type=$type;
+						  $this->Sens=$sens;
+						  $this->CodeDevise=$codedevise;
+						  $this->IdCommission=$idcommission;
+						  $this->IdAgence=$idagence;
+					 
+					 
+					  $requete="update mouvement set idmouv='".$this->IdMouv."',datemouv=CURRENT_TIMESTAMP,montant='".$this->Montant."',etatmouv='".$this->EtatMouv."',type='".$this->Type."',sens='".$this->Sens."',codedevise='".$this->CodeDevise."',idcommission='".$this->IdCommission."',idagence='".$this->IdAgence."' where idmouv='".$this->IdMouv."' limit 1";
+					  $conn=new connect();// preperation de la conexion
+					  $resultat=$conn-> fx_modifier($requete);
+					  }
+					 
+					 function fx_ModifierAgenceMouvement($idmouv,$idagence){  
+						  $requete="update mouvement set idagence=".$idagence.",etatmouv=1 where idmouv=".$idmouv." limit 1";
+						  $conn=new connect();
+						  $resultat=$conn-> fx_modifier($requete);
+					  }
+				  
+				  
+					 function fx_ListeGenMouvement(){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from   mouvement,agence,agent
+											where  agence.idagence = mouvement.idagence
+											AND	   agent.idagent = mouvement.idagent
+											AND mouvement.etatmouv=1";
+											echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+										}
+								
+								function fx_ListeMouvement($Cdate,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from mouvement,agence,agent
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence=".$idagence."
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_RapportMouvement($Cdate,$idagence){
+								  $requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+											from mouvement,agence
+											where agence.idagence = mouvement.idagence
+											AND mouvement.idagence=".$idagence."
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND mouvement.etatmouv=1
+                                            group by mouvement.type, mouvement.sens, mouvement.codedevise";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+												return $resultat;
+											} else{
+												 return false;
+											}
+									}
+									function fx_RapportMouvement_Limite($Cdate,$idagence,$DateLimite){
+								  		$requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+											from mouvement,agence
+											where agence.idagence = mouvement.idagence
+											AND mouvement.idagence=".$idagence."
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND mouvement.etatmouv=1
+											AND DATE(datemouv)>'".$DateLimite."'
+                                            group by mouvement.type, mouvement.sens, mouvement.codedevise";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+												return $resultat;
+											} else{
+												 return false;
+											}
+									}
+									function fx_RapportMouvementJGlobal($Cdate){
+									  $requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+												from mouvement,agence
+												where agence.idagence = mouvement.idagence
+												AND DATE(mouvement.datemouv)='".$Cdate."'
+												AND mouvement.etatmouv=1
+												group by mouvement.type, mouvement.sens, mouvement.codedevise";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+										function fx_RapportMouvementJGlobal_Limite($Cdate,$DateLimite){
+										  $requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+													from mouvement,agence
+													where agence.idagence = mouvement.idagence
+													AND DATE(mouvement.datemouv)='".$Cdate."'
+													AND mouvement.etatmouv=1
+													AND DATE(datemouv)>'".$DateLimite."'
+													group by mouvement.type, mouvement.sens, mouvement.codedevise";
+													//echo $requete;
+													$conn=new connect();// preperation de la conexion
+													  $resultat=$conn-> fx_lecture($requete);
+													 if ($resultat){
+													 
+																	return $resultat;
+																	
+													} else{
+													
+														 return false;
+												}
+											}
+								function fx_RapportMouvementMensuel($CMois,$CAnnee,$idagence){
+								  $requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+											from mouvement,agence
+											where agence.idagence = mouvement.idagence
+											AND mouvement.idagence=".$idagence."
+											AND MONTH(mouvement.datemouv)='".$CMois."'
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.etatmouv=1
+                                            group by mouvement.type, mouvement.sens, mouvement.codedevise";
+											echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+									function fx_RapportMouvementMensuel_Limite($CMois,$CAnnee,$idagence,$DateLimite){
+								  		$requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+											from mouvement,agence
+											where agence.idagence = mouvement.idagence
+											AND mouvement.idagence=".$idagence."
+											AND MONTH(mouvement.datemouv)='".$CMois."'
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.etatmouv=1
+											AND DATE(datemouv)>'".$DateLimite."'
+                                            group by mouvement.type, mouvement.sens, mouvement.codedevise";
+											echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+									function fx_RapportMouvementMensuelGlobal($CMois,$CAnnee){
+									  $requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+												from mouvement,agence
+												where agence.idagence = mouvement.idagence
+												AND MONTH(mouvement.datemouv)='".$CMois."'
+												AND YEAR(mouvement.datemouv)='".$CAnnee."'
+												AND mouvement.etatmouv=1
+												group by mouvement.type, mouvement.sens, mouvement.codedevise";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									
+									function fx_RapportMouvementMensuelGlobalLimite($CMois,$CAnnee,$DateLimite){
+									  $requete="select sum(mouvement.montant) as total, mouvement.type, mouvement.sens, codedevise
+												from mouvement,agence
+												where agence.idagence = mouvement.idagence
+												AND MONTH(mouvement.datemouv)='".$CMois."'
+												AND YEAR(mouvement.datemouv)='".$CAnnee."'
+												AND DATE(datemouv)>'".$DateLimite."'
+												AND mouvement.etatmouv=1
+												group by mouvement.type, mouvement.sens, mouvement.codedevise";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+								function fx_ListeMouvement_Type($Cdate,$idagence,$Type){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from mouvement,agence,agent
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.type ='".$Type."'
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+									function fx_ListeRetrait($Cdate,$idagence){
+											
+									     $requete="select retrait.idretrait,
+												   retrait.idtransfert,
+												   retrait.idmouv,
+												   retrait.EtatRetrait,
+												   mouvement.datemouv,
+												   mouvement.montant,
+												   mouvement.codedevise,
+												   mouvement.type,
+												   transfert.codetrans,
+												   transfert.idtransfert,
+												   transfert.idbeneficiaire,
+												   transfert.idexpedit,
+												   transfert.IdAgenceExp,
+												   transfert.IdAgenceDst,
+												   beneficiaire.idbeneficiaire,
+												   beneficiaire.nom AS NomBen,
+												   beneficiaire.postnom AS PostNBen,
+												   beneficiaire.prenom AS PrenBen,
+												   expeditaire.idexpedit,
+												   expeditaire.nom AS Expediteur,
+												   agent.nom,
+												   agent.prenom,
+												   agence.idagence,
+												   AgExp.idagence,
+												   agence.nomagence,
+												   AgExp.nomagence AS AgenceEmetrice
+												   
+												from   retrait, mouvement, transfert, beneficiaire, expeditaire, agent, agence, agence AS AgExp
+												where  retrait.idmouv = mouvement.idmouv
+												AND	   retrait.idtransfert = transfert.idtransfert
+												AND    transfert.idbeneficiaire = beneficiaire.idbeneficiaire
+												AND    transfert.idexpedit = expeditaire.idexpedit
+												AND    mouvement.idagent = agent.idagent
+												AND    transfert.IdAgenceExp = AgExp.idagence
+												AND    transfert.IdAgenceDst = agence.idagence
+												AND    transfert.IdAgenceDst = ".$idagence."
+												AND DATE(mouvement.datemouv)='".$Cdate."'
+												AND mouvement.etatmouv=1
+												AND retrait.EtatRetrait=1
+												order by mouvement.datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_ListeRetrait_Mens($CMois,$CAnnee,$idagence){
+											
+									     $requete="select retrait.idretrait,
+												   retrait.idtransfert,
+												   retrait.idmouv,
+												   retrait.EtatRetrait,
+												   mouvement.datemouv,
+												   mouvement.montant,
+												   mouvement.codedevise,
+												   mouvement.type,
+												   transfert.codetrans,
+												   transfert.idtransfert,
+												   transfert.idbeneficiaire,
+												   transfert.idexpedit,
+												   transfert.IdAgenceExp,
+												   transfert.IdAgenceDst,
+												   beneficiaire.idbeneficiaire,
+												   beneficiaire.nom AS NomBen,
+												   beneficiaire.postnom AS PostNBen,
+												   beneficiaire.prenom AS PrenBen,
+												   expeditaire.idexpedit,
+												   expeditaire.nom AS Expediteur,
+												   agent.nom,
+												   agent.prenom,
+												   agence.idagence,
+												   AgExp.idagence,
+												   agence.nomagence,
+												   AgExp.nomagence AS AgenceEmetrice
+												   
+												from   retrait, mouvement, transfert, beneficiaire, expeditaire, agent, agence, agence AS AgExp
+												where  retrait.idmouv = mouvement.idmouv
+												AND	   retrait.idtransfert = transfert.idtransfert
+												AND    transfert.idbeneficiaire = beneficiaire.idbeneficiaire
+												AND    transfert.idexpedit = expeditaire.idexpedit
+												AND    mouvement.idagent = agent.idagent
+												AND    transfert.IdAgenceExp = AgExp.idagence
+												AND    transfert.IdAgenceDst = agence.idagence
+												AND    transfert.IdAgenceDst = ".$idagence."
+												AND MONTH(mouvement.datemouv)='".$CMois."'
+												AND YEAR(mouvement.datemouv)='".$CAnnee."'
+												AND mouvement.etatmouv=1
+												AND retrait.EtatRetrait=1
+												order by mouvement.datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_ListeRetrait_An($CAnnee,$idagence){
+											
+									     $requete="select retrait.idretrait,
+												   retrait.idtransfert,
+												   retrait.idmouv,
+												   retrait.EtatRetrait,
+												   mouvement.datemouv,
+												   mouvement.montant,
+												   mouvement.codedevise,
+												   mouvement.type,
+												   transfert.codetrans,
+												   transfert.idtransfert,
+												   transfert.idbeneficiaire,
+												   transfert.idexpedit,
+												   transfert.IdAgenceExp,
+												   transfert.IdAgenceDst,
+												   beneficiaire.idbeneficiaire,
+												   beneficiaire.nom AS NomBen,
+												   beneficiaire.postnom AS PostNBen,
+												   beneficiaire.prenom AS PrenBen,
+												   expeditaire.idexpedit,
+												   expeditaire.nom AS Expediteur,
+												   agent.nom,
+												   agent.prenom,
+												   agence.idagence,
+												   AgExp.idagence,
+												   agence.nomagence,
+												   AgExp.nomagence AS AgenceEmetrice
+												   
+												from   retrait, mouvement, transfert, beneficiaire, expeditaire, agent, agence, agence AS AgExp
+												where  retrait.idmouv = mouvement.idmouv
+												AND	   retrait.idtransfert = transfert.idtransfert
+												AND    transfert.idbeneficiaire = beneficiaire.idbeneficiaire
+												AND    transfert.idexpedit = expeditaire.idexpedit
+												AND    mouvement.idagent = agent.idagent
+												AND    transfert.IdAgenceExp = AgExp.idagence
+												AND    transfert.IdAgenceDst = agence.idagence
+												AND    transfert.IdAgenceDst = ".$idagence."
+												AND YEAR(mouvement.datemouv)='".$CAnnee."'
+												AND mouvement.etatmouv=1
+												AND retrait.EtatRetrait=1
+												order by mouvement.datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_ListeFinance($Cdate,$idagence){
+										  $requete="select financement.idFinancement,
+														   financement.motif,
+														   financement.EtatFinancement,
+														   financement.idmouv,
+														   mouvement.idmouv,
+														   mouvement.montant,
+														   mouvement.datemouv,
+														   mouvement.codedevise,
+														   mouvement.idagence,
+														   mouvement.type,
+														   agence.idagence,
+														   agence.nomagence,
+														   agent.idagent,
+														   agent.nom,
+														   agent.prenom,
+														   agenceprov.idagence as idAgtProv,
+														   agenceprov.nomagence as NomAgtProv
+														   
+													from financement,mouvement,agence,agent,agence as agenceprov
+													where financement.idmouv = mouvement.idmouv
+													AND	  agence.idagence = mouvement.idagence
+													AND	  agent.idagent = mouvement.idagent
+													AND financement.IdAgenceProv=agenceprov.idagence
+													AND mouvement.idagence=".$idagence."
+													AND DATE(mouvement.datemouv)='".$Cdate."'
+													AND mouvement.etatmouv=1
+													order by mouvement.datemouv
+													
+													";
+													//echo $requete;
+													 // echo $requete; 
+										  $conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+														
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+									}
+									}
+								function fx_ListeFinanceMensuel($CMois,$CAnnee,$idagence){
+										  $requete="select financement.idFinancement,
+														   financement.motif,
+														   financement.EtatFinancement,
+														   financement.idmouv,
+														   mouvement.idmouv,
+														   mouvement.montant,
+														   mouvement.datemouv,
+														   mouvement.codedevise,
+														   mouvement.idagence,
+														   mouvement.type,
+														   agence.idagence,
+														   agence.nomagence,
+														   agent.idagent,
+														   agent.nom,
+														   agent.prenom,
+														   agenceprov.idagence as idAgtProv,
+														   agenceprov.nomagence as NomAgtProv
+														   
+													from financement,mouvement,agence,agent,agence as agenceprov
+													where financement.idmouv = mouvement.idmouv
+													AND	  agence.idagence = mouvement.idagence
+													AND	  agent.idagent = mouvement.idagent
+													AND financement.IdAgenceProv=agenceprov.idagence
+													AND mouvement.idagence=".$idagence."
+													AND MONTH(mouvement.datemouv)='".$CMois."'
+													AND YEAR(mouvement.datemouv)='".$CAnnee."'
+													AND mouvement.etatmouv=1
+													order by mouvement.datemouv
+													
+													";
+													//echo $requete;
+													 // echo $requete; 
+										  $conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+														
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+									}
+									}
+								function fx_ListeFinanceAnnuel($CAnnee,$idagence){
+										  $requete="select financement.idFinancement,
+														   financement.motif,
+														   financement.EtatFinancement,
+														   financement.idmouv,
+														   mouvement.idmouv,
+														   mouvement.montant,
+														   mouvement.datemouv,
+														   mouvement.codedevise,
+														   mouvement.idagence,
+														   mouvement.type,
+														   agence.idagence,
+														   agence.nomagence,
+														   agent.idagent,
+														   agent.nom,
+														   agent.prenom,
+														   agenceprov.idagence as idAgtProv,
+														   agenceprov.nomagence as NomAgtProv
+														   
+													from financement,mouvement,agence,agent,agence as agenceprov
+													where financement.idmouv = mouvement.idmouv
+													AND	  agence.idagence = mouvement.idagence
+													AND	  agent.idagent = mouvement.idagent
+													AND financement.IdAgenceProv=agenceprov.idagence
+													AND mouvement.idagence=".$idagence."
+													AND YEAR(mouvement.datemouv)='".$CAnnee."'
+													AND mouvement.etatmouv=1
+													order by mouvement.datemouv
+													
+													";
+													//echo $requete;
+													 // echo $requete; 
+										  $conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+														
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+									}
+									}
+								function fx_ListeVirementJournalier($Cdate,$idagence){
+										  $requete="select virement.idvirement,
+														   virement.idfinancement,
+														   virement.etatvirement,
+														   mouvement.idmouv,
+														   mouvement.montant,
+														   mouvement.datemouv,
+														   mouvement.codedevise,
+														   mouvement.idagence,
+														   mouvement.type,
+														   agence.idagence,
+														   agence.nomagence,
+														   agent.idagent,
+														   agent.nom,
+														   agent.prenom,
+														   agenceprov.idagence as idAgtProv,
+														   agenceprov.nomagence as NomAgtProv
+														   
+													from financement,mouvement,agence,agent,agence as agenceprov
+													where financement.idmouv = mouvement.idmouv
+													AND	  agence.idagence = mouvement.idagence
+													AND	  agent.idagent = mouvement.idagent
+													AND financement.IdAgenceProv=agenceprov.idagence
+													AND mouvement.idagence=".$idagence."
+													AND DATE(mouvement.datemouv)='".$Cdate."'
+													AND mouvement.etatmouv=1
+													order by mouvement.datemouv
+													
+													";
+													//echo $requete;
+													 // echo $requete; 
+										  $conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+														
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+									}
+									}
+									
+								function fx_ListeMouvement_Depense($Cdate,$idagence,$Type){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   depense.motif as type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from mouvement,agence,agent,depense
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.type ='".$Type."'
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND mouvement.idmouv =depense.idmouv 
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+									
+								function fx_ListeMouvement_Depense_Mensuel($CMois,$CAnnee,$idagence,$Type){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   depense.motif as type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from mouvement,agence,agent,depense
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.type ='".$Type."'
+											AND MONTH(mouvement.datemouv)='".$CMois."'
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.idmouv =depense.idmouv 
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_ListeMouvement_Depense_Annuel($CAnnee,$idagence,$Type){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   depense.motif as type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from mouvement,agence,agent,depense
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.type ='".$Type."'
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.idmouv =depense.idmouv 
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_ListeMouvement_Env($Cdate,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom,
+												   transfert.codetrans,
+												   expeditaire.nom as ExNom,
+												   expeditaire.postnom AS ExPostnom,
+												   mouvcommission.montant as commission,
+												   mouvcommission.codedevise as Devcommission
+												   
+											from mouvement,agence,agent,commission,transfert,expeditaire,mouvement as mouvcommission
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.etatmouv=1
+											AND mouvement.type ='envoi'
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND mouvement.idmouv =transfert.idmouv
+                                            AND commission.idtransfert=transfert.idtransfert
+                                            AND commission.idmouv=mouvcommission.idmouv
+											AND transfert.idexpedit = expeditaire.idexpedit
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								
+								function fx_ListeMouvement_transfert($Cdate,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom,
+												   transfert.codetrans,
+												   expeditaire.nom as ExNom,
+												   expeditaire.postnom AS ExPostnom,
+                                                   mouvcommission.montant as commission,
+												   mouvcommission.codedevise as Devcommission
+												   
+											from mouvement,agence,agent,commission,transfert,expeditaire,mouvement as mouvcommission
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.etatmouv=1
+											AND mouvement.type ='envoi'
+                                            AND mouvement.idmouv =transfert.idmouv
+                                            AND commission.idtransfert=transfert.idtransfert
+                                            AND commission.idmouv=mouvcommission.idmouv
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND transfert.idexpedit = expeditaire.idexpedit
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								
+								function fx_Rapport_transf($Cdate,$idagence){
+								  $requete="select sum(mouvement.montant) as total, mouvement.codedevise
+								  
+											from mouvement,agence,transfert
+											where agence.idagence = mouvement.idagence
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.etatmouv=1
+											AND mouvement.type ='envoi'
+                                            AND mouvement.idmouv =transfert.idmouv
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											group by mouvement.codedevise";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								
+						////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_conversion_Jour($Cdate,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom,
+												   concerner.TauxChange
+												   
+											from mouvement,agence,agent,concerner
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND	concerner.idmouv = mouvement.idmouv
+											AND mouvement.sens='E'
+											AND mouvement.idagence =".$idagence."
+											AND mouvement.type ='conversion'
+											AND DATE(mouvement.datemouv)='".$Cdate."'
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+							////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgc_Jour($IdAgence,$DateMouv){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			mouvement.Montant AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			concerner_Change.idmouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+								  			mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg
+												   
+											from mouvement,concerner_Change,agent
+											where concerner_Change.idmouv = mouvement.IdMouv
+											AND mouvement.IdAgent = agent.IdAgent
+											AND mouvement.Sens='E'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											order by mouvement.DateMouv DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+							////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgc_SumJr($IdAgence,$DateMouv){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			concerner_Change.idmouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,concerner_Change
+											where concerner_Change.idmouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+							////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgc_Date($IdAgence,$DateDeb,$DateFin){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			mouvement.Montant AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			concerner_Change.idmouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+											mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg
+
+											from mouvement,concerner_Change, agent
+											where concerner_Change.idmouv = mouvement.IdMouv
+											AND mouvement.IdAgent  = agent.IdAgent
+											AND mouvement.Sens='E'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											order by mouvement.DateMouv DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+							////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgc_Sum($IdAgence,$DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			concerner_Change.idmouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,concerner_Change
+											where concerner_Change.idmouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+							
+							////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgc_Jour($IdAgence,$DateMouv){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			mouvement.Montant AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			depense.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+								  			mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg
+												   
+											from mouvement,depense,agent
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgent = agent.IdAgent
+											AND mouvement.Sens='S'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+											order by mouvement.DateMouv DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+							////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgc_SumJr($IdAgence,$DateMouv){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,depense
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='S'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgc_Date($IdAgence,$DateDeb,$DateFin){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			mouvement.Montant AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			depense.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+											mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg
+
+											from mouvement,depense, agent
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgent  = agent.IdAgent
+											AND mouvement.Sens='S'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+											order by mouvement.DateMouv DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgc_Sum($IdAgence,$DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			depense.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,depense
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='S'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinacementAgc_Jour($IdAgence,$DateMouv){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			mouvement.Montant AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			financement.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+								  			mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg,
+											agence.IdAgence,
+											agence.NomAgence
+												   
+											from mouvement,financement,agent,agence
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgent = agent.IdAgent
+											AND mouvement.IdAgence=agence.IdAgence
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											order by mouvement.DateMouv DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinancementAgc_SumJr($IdAgence,$DateMouv){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinancementAgc_Date($IdAgence,$DateDeb,$DateFin){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			mouvement.Montant AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			financement.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+											mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg,
+											agence.IdAgence,
+											agence.NomAgence
+
+											from mouvement,financement, agent,agence
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgent  = agent.IdAgent
+											AND mouvement.IdAgence = agence.IdAgence
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											order by mouvement.DateMouv DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinancementAgc_Sum($IdAgence,$DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+							////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinacementAgces_Jour($DateMouv){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			financement.Motif,
+								  			financement.IdAgence AS Agenc,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+								  			mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg,
+											agence.IdAgence,
+											agence.NomAgence
+												   
+											from mouvement,financement,agent,agence
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgent = agent.IdAgent
+											AND financement.IdAgence=agence.IdAgence
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+												group by mouvement.CodeMonnaie
+											order by mouvement.IdAgence";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+									////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinancementAgces_SumJr($DateMouv){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinancementAgces_Date($DateDeb,$DateFin){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			financement.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+											mouvement.IdAgent,
+											agent.IdAgent,
+											agent.NomAg,
+											agent.PrenomAg,
+											agence.IdAgence,
+											agence.NomAgence
+
+											from mouvement,financement, agent,agence
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgent  = agent.IdAgent
+											AND financement.IdAgence = agence.IdAgence
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											 group by mouvement.CodeMonnaie
+											order by mouvement.IdAgence DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_FinancementAgces_Sum($DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgces_Jour($DateMouv){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			depense.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+								  			mouvement.IdAgence,
+								  			agence.NomAgence
+												   
+											from mouvement,depense,agence
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgence = agence.IdAgence
+											AND mouvement.Sens='S'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+												group by mouvement.CodeMonnaie
+											order by mouvement.IdAgence DESC";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgces_SumJr($DateMouv){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,depense
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='S'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgces_Date($DateDeb,$DateFin){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			depense.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+											mouvement.IdAgence,
+											agence.NomAgence
+
+											from mouvement,depense, agence
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.IdAgence  = agence.IdAgence
+											AND mouvement.Sens='S'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.IdAgence";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_DepenseAgces_Sum($DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			depense.IdMouv,
+								  			depense.Motif,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,depense
+											where depense.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='S'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Depense'
+											AND mouvement.EtatMouv=1
+											AND depense.Etatdep=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgces_Date($DateDeb,$DateFin){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+											mouvement.IdAgence,
+											agence.NomAgence
+											from mouvement, agence
+											where mouvement.IdAgence  = agence.IdAgence
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.IdAgence ";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgces_Sum($DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			concerner_Change.idmouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,concerner_Change
+											where concerner_Change.idmouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgces_Jour($DateMouv){
+								  $requete="select 
+								  			mouvement.IdMouv,
+								  			mouvement.Montant AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv,
+								  			mouvement.IdAgence,
+											agence.NomAgence
+												   
+											from mouvement,agence
+											where mouvement.IdAgence = agence.IdAgence
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.IdAgence";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								////////////////////////////////////////////////////////////////////////////////////////////	
+								function fx_ConversionAgces_SumJr($DateMouv){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			concerner_Change.idmouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,concerner_Change
+											where concerner_Change.idmouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) = '".$DateMouv."'
+											AND mouvement.Type ='conversion'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								
+							///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Financement_Date($IdAgence,$DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+							///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Financement_OperatDate($IdAgence,$IdAgent,$DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND mouvement.IdAgent = '".$IdAgent."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."' 
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+							///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Financement_Jour($IdAgence,$DateDeb){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateDeb."'  
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Financement_OperatJour($IdAgence,$IdAgent,$DateDeb){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND financement.IdAgence ='".$IdAgence."'
+											AND financement.IdAgent = '".$IdAgent."'
+											AND DATE(mouvement.DateMouv) = '".$DateDeb."'  
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Financement_GlobJour($DateDeb){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) = '".$DateDeb."'  
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Financement_GlobDate($DateDeb,$DateFin){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			financement.IdMouv,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement,financement
+											where financement.IdMouv = mouvement.IdMouv
+											AND mouvement.Sens='E'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."'   
+											AND mouvement.Type ='Financement'
+											AND mouvement.EtatMouv=1
+											AND financement.EtatFinancement=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Mouvement_Jour($IdAgence,$DateDeb,$Type,$Sens){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement
+											where mouvement.Sens='".$Sens."'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) = '".$DateDeb."'  
+											AND mouvement.Type ='".$Type."'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Mouvement_OperatJour($IdAgence,$IdAgent,$DateDeb,$Type,$Sens){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement
+											where mouvement.Sens='".$Sens."'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND mouvement.IdAgent = '".$IdAgent."'
+											AND DATE(mouvement.DateMouv) = '".$DateDeb."'  
+											AND mouvement.Type ='".$Type."'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Mouvement_GlobJour($DateDeb,$Type,$Sens){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement
+											where mouvement.Sens='".$Sens."'
+											AND DATE(mouvement.DateMouv) = '".$DateDeb."'  
+											AND mouvement.Type ='".$Type."'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Mouvement_GlobDate($DateDeb,$DateFin,$Type,$Sens){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie,
+								  			mouvement.Type,
+								  			mouvement.Sens,
+								  			mouvement.IdAgence,
+								  			mouvement.DateMouv,
+								  			mouvement.EtatMouv
+												   
+											from mouvement
+											where mouvement.Sens='".$Sens."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."'  
+											AND mouvement.Type ='".$Type."'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Mouvement_Date($IdAgence,$DateDeb,$DateFin,$Type,$Sens){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie
+												   
+											from mouvement
+											where mouvement.Sens='".$Sens."'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."'  
+											AND mouvement.Type ='".$Type."'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								///////////////////////////////////////////////////////////////////////////////////////////////
+								function fx_Rapport_Mouvement_OperatDate($IdAgence,$IdAgent,$DateDeb,$DateFin,$Type,$Sens){
+								  $requete="select 
+								  			COUNT(mouvement.IdMouv) AS Nbre,
+								  			SUM(mouvement.Montant) AS Total,
+								  			mouvement.CodeMonnaie
+												   
+											from mouvement
+											where mouvement.Sens='".$Sens."'
+											AND mouvement.IdAgence ='".$IdAgence."'
+											AND mouvement.IdAgent = '".$IdAgent."'
+											AND DATE(mouvement.DateMouv) BETWEEN '".$DateDeb."' AND '".$DateFin."'  
+											AND mouvement.Type ='".$Type."'
+											AND mouvement.EtatMouv=1
+											group by mouvement.CodeMonnaie
+											order by mouvement.CodeMonnaie";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_ListeMouvement_Mensuel_Envoi($CMois,$CAnnee,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom,
+												   expeditaire.nom as ExNom,
+												   expeditaire.postnom AS ExPostnom,
+												   transfert.codetrans,
+												   mouvcommission.montant as commission,
+												   mouvcommission.codedevise as Devcommission
+												   
+											from mouvement,agence,agent,commission,transfert,expeditaire,mouvement as mouvcommission
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence=".$idagence."
+											AND mouvement.etatmouv=1
+											AND MONTH(mouvement.datemouv)='".$CMois."'
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.type='envoi'
+											AND mouvement.idmouv =transfert.idmouv
+                                            AND commission.idtransfert=transfert.idtransfert
+                                            AND commission.idmouv=mouvcommission.idmouv
+											AND transfert.idexpedit = expeditaire.idexpedit
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_ListeMouvement_Annuel_Envoi($CAnnee,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom,
+												   expeditaire.nom as ExNom,
+												   expeditaire.postnom AS ExPostnom,
+												   transfert.codetrans,
+												   mouvcommission.montant as commission,
+												   mouvcommission.codedevise as Devcommission
+												   
+											from mouvement,agence,agent,commission,transfert,expeditaire,mouvement as mouvcommission
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence=".$idagence."
+											AND mouvement.etatmouv=1
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.type='envoi'
+											AND mouvement.idmouv =transfert.idmouv
+                                            AND commission.idtransfert=transfert.idtransfert
+                                            AND commission.idmouv=mouvcommission.idmouv
+											AND transfert.idexpedit = expeditaire.idexpedit
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_ListeMouvement_Mensuel_Type($CMois,$CAnnee,$idagence,$Type){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from mouvement,agence,agent
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence=".$idagence."
+											AND MONTH(mouvement.datemouv)='".$CMois."'
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.type='".$Type."'
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_ListeMouvement_Annuel_Type($CAnnee,$idagence,$Type){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom
+												   
+											from mouvement,agence,agent
+											where agence.idagence = mouvement.idagence
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence=".$idagence."
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.type='".$Type."'
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+								function fx_ListeConversion_Mensuel($CMois,$CAnnee,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom,
+												   concerner.TauxChange
+												   
+											from mouvement,agence,agent,concerner
+											where agence.idagence = mouvement.idagence
+											AND	concerner.idmouv = mouvement.idmouv
+											AND mouvement.sens='E'
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence=".$idagence."
+											AND MONTH(mouvement.datemouv)='".$CMois."'
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.type='conversion'
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}	
+								function fx_ListeConversion_Annuel($CAnnee,$idagence){
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   mouvement.sens,
+												   agence.idagence,
+												   agence.nomagence,
+												   agent.idagent,
+												   agent.nom,
+												   agent.prenom,
+												   concerner.TauxChange
+												   
+											from mouvement,agence,agent,concerner
+											where agence.idagence = mouvement.idagence
+											AND	concerner.idmouv = mouvement.idmouv
+											AND mouvement.sens='E'
+											AND	agent.idagent = mouvement.idagent
+											AND mouvement.idagence=".$idagence."
+											AND YEAR(mouvement.datemouv)='".$CAnnee."'
+											AND mouvement.type='conversion'
+											AND mouvement.etatmouv=1
+											order by mouvement.datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+									
+								function fx_RM_Journalier($Cdate,$idagence,$sens,$devise){
+									//echo $idagence;
+								  $requete="select sum(montant) as total
+											from mouvement
+											where  mouvement.idagence=".$idagence." 
+											AND DATE(datemouv)<'".$Cdate."' 
+											AND sens='".$sens."'
+											AND codedevise='".$devise."'
+											AND mouvement.etatmouv=1
+											order by datemouv";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+									}
+									function fx_RM_Journalier_Limite($Cdate,$idagence,$sens,$devise,$DateLimite){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where  mouvement.idagence=".$idagence." 
+												AND DATE(datemouv)<'".$Cdate."'
+												AND DATE(datemouv)>'".$DateLimite."'
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo "<br/><br/><br/><br/>".$requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_RM_Journalier_Limite_test($Cdate,$idagence,$sens,$devise,$DateLimite){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where  mouvement.idagence=".$idagence." 
+												AND DATE(datemouv)<'".$Cdate."'
+												AND DATE(datemouv)>'".$DateLimite."'
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												AND type<>'envoi'
+												order by datemouv";
+												//echo "<br/><br/><br/><br/>".$requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_total_transf_limite($Cdate,$idagence,$devise,$DateLimite){
+									  $requete="select sum(mouvement.montant) as total
+									  
+												from mouvement,transfert
+												where mouvement.idagence =".$idagence."
+												AND mouvement.etatmouv=1
+												AND mouvement.type ='envoi'
+												AND mouvement.idmouv =transfert.idmouv
+												AND DATE(datemouv)<'".$Cdate."'
+												AND DATE(datemouv)>'".$DateLimite."'
+												AND codedevise='".$devise."'
+												order by mouvement.datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_RM_JournalierGlobal($Cdate,$sens,$devise){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where DATE(datemouv)<'".$Cdate."' 
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}	
+									function fx_RM_JournalierGlobal_Limite($Cdate,$sens,$devise,$DateLimite){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where DATE(datemouv)<'".$Cdate."' 
+												AND DATE(datemouv)>'".$DateLimite."'
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}	
+									function fx_RM_Mensuelle($CMois,$CYear,$idagence,$sens,$devise){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where  mouvement.idagence=".$idagence." 
+												AND ((MONTH(datemouv)<'".$CMois."' AND YEAR(datemouv)='".$CYear."')OR(YEAR(datemouv)<'".$CYear."'))
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo "<br/><br/><br/>".$requete."<br/>";
+												echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_RM_Mensuelle_Limite($CMois,$CYear,$idagence,$sens,$devise,$DateLimite){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where  mouvement.idagence=".$idagence." 
+												AND ((MONTH(datemouv)<'".$CMois."' AND YEAR(datemouv)='".$CYear."')OR(YEAR(datemouv)<'".$CYear."'))
+												AND DATE(datemouv)>'".$DateLimite."'
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}	
+									function fx_RM_Annuel($CYear,$idagence,$sens,$devise){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where  mouvement.idagence=".$idagence." 
+												AND YEAR(datemouv)<'".$CYear."'
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+									function fx_RM_MensuelleGlobal($CMois,$CYear,$sens,$devise){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where ((MONTH(datemouv)<'".$CMois."' AND YEAR(datemouv)='".$CYear."')OR(YEAR(datemouv)<'".$CYear."'))
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo "<br/><br/><br/><br/><br/>Requete = ".$requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+								function fx_RM_MensuelleGlobal_Limite($CMois,$CYear,$sens,$devise,$DateLimite){
+									//echo $idagence;
+									  $requete="select sum(montant) as total
+												from mouvement
+												where ((MONTH(datemouv)<'".$CMois."' AND YEAR(datemouv)='".$CYear."')OR(YEAR(datemouv)<'".$CYear."'))
+												AND DATE(datemouv)>'".$DateLimite."'
+												AND sens='".$sens."'
+												AND codedevise='".$devise."'
+												AND mouvement.etatmouv=1
+												order by datemouv";
+												//echo $requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+								 function fx_ListeMouvementAgence($idagent){
+									$this->IdAgent=$idagent;
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   mouvement.idagence,
+												   mouvement.codedevise,
+												   mouvement.idagent,
+												   agence.idagence,
+												   agence.nom,
+												   agent.idagent,
+												   agent.nomag,
+												   agent.prenom
+												   
+											from   mouvement,agence,agent
+											where  mouvement.idagence = '".$this->IdAgent."'
+											AND	   agence.idagence = mouvement.idagence
+											AND	   agent.idagent = mouvement.idagent
+											AND mouvement.etatmouv=1
+											AND mouvement.etatmouv=1";
+												
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+										}
+										
+								//Creéation de la fonction Recherche IdMouv pour Modification
+								 function fx_RechercheIdMouv($idmouv){
+									$this->IdMouv=$idmouv;
+								  $requete="select mouvement.montant,
+												   mouvement.idmouv,
+												   mouvement.datemouv,
+												   mouvement.etatmouv,
+												   mouvement.type,
+												   agence.idagence,
+												   agence.nom,
+												   devise.codeddevise,
+												   devise.monnaie,
+												   agent.nomag,
+												   agent.postnom,
+												   agent.prenom
+												  
+											from mouvement,
+												 agence,
+												 devise,
+												 agent
+												 
+											where mouvement.idmouv='".$this->IdMouv."' 
+											AND   mouvement.idagence=agence.idagence
+											AND	  mouvement.codedevise=devise.codeddevise
+											AND	  mouvement.idagent=agent.idagent";
+											
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+										}
+										
+										
+					 //Création de la fonction Changement Etat Mouvement
+					   function fx_ChangementEtatMouvement($idmouv,$etatmouv){
+							$this->IdMouv=$idmouv;
+							$this->EtatMouv=$etatmouv;
+							$requete="update mouvement set etatmouv=".$this->EtatMouv." where idmouv=".$this->IdMouv;
+							echo $requete; 
+							$conn=new connect();// preperation de la conexion
+							$resultat=$conn-> fx_modifier($requete);
+							
+							if($resultat){
+								return $resultat;
+							}else{
+								return false;
+							}
+						}
+				
+					///////fx_function_suppression_clien_com//////////////
+					
+					function fx_suppression_com($idtransfert){
+						$this->idtransfert=$idtransfert;
+						$requete="update commission set etatcommis=0
+								  where idtransfert='".$this->idtransfert."'";
+								
+			  
+					  echo $requete; 
+					  $conn=new connect();// preperation de la conexion
+					  $resultat=$conn-> fx_lecture($requete);
+							if ($resultat){
+											
+								return $resultat;
+							}
+						   else{
+								 return false;
+							}
+					}
+					
+					function fx_RechercheIdMouvComm($idtransfert){
+									$this->idtransfert=$idtransfert;
+								  $requete="select  commission.idmouv  
+											from commission	 
+											where commission.idtransfert='".$this->idtransfert."'";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+										}
+							}
+					
+					
+					function fx_SituationTranferts(){
+						  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+									from mouvement,transfert 
+									where transfert.idmouv = mouvement.idmouv 
+									AND mouvement.type='envoi' 
+									AND transfert.EtatTransfert=1
+									AND mouvement.etatmouv=1
+									group by transfert.Retirer, mouvement.codedevise";
+									//echo $requete;
+									$conn=new connect();// preperation de la conexion
+									  $resultat=$conn-> fx_lecture($requete);
+									 if ($resultat){
+										return $resultat;
+									} else{
+										 return false;
+									}
+						}
+						
+						function fx_SituationTranferts_Limite($DateLimite){
+						  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+									from mouvement,transfert 
+									where transfert.idmouv = mouvement.idmouv 
+									AND mouvement.type='envoi' 
+									AND transfert.EtatTransfert=1
+									AND mouvement.etatmouv=1
+									AND DATE(datemouv)>'".$DateLimite."'
+									group by transfert.Retirer, mouvement.codedevise";
+									//echo $requete;
+									$conn=new connect();// preperation de la conexion
+									  $resultat=$conn-> fx_lecture($requete);
+									 if ($resultat){
+										return $resultat;
+									} else{
+										 return false;
+									}
+						}
+						
+						function fx_SituationTranferts_Mensuels($DateDeb,$DateLimite){
+						//echo $idagence;
+						  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+									from mouvement,transfert 
+									where transfert.idmouv = mouvement.idmouv 
+									AND mouvement.type='envoi' 
+									AND transfert.EtatTransfert=1
+									AND mouvement.etatmouv=1
+									AND DATE(mouvement.datemouv) BETWEEN('".$DateLimite."') AND ('".$DateDeb."')
+									group by transfert.Retirer, mouvement.codedevise";
+									//echo $requete;
+									$conn=new connect();// preperation de la conexion
+									  $resultat=$conn-> fx_lecture($requete);
+									 if ($resultat){
+									 
+													return $resultat;
+													
+									} else{
+									
+										 return false;
+								    }
+							}
+							function fx_SituationTranferts_Mensuel_Limite($CMois,$CYear,$DateLimite){
+							//echo $idagence;
+							  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+										from mouvement,transfert 
+										where transfert.idmouv = mouvement.idmouv 
+										AND mouvement.type='envoi' 
+										AND transfert.EtatTransfert=1
+										AND mouvement.etatmouv=1
+										AND MONTH(mouvement.datemouv) = '".$CMois."'
+										AND	YEAR(mouvement.datemouv) = '".$CYear."'
+										AND DATE(datemouv)>'".$DateLimite."'
+										group by transfert.Retirer, mouvement.codedevise";
+										//echo $requete;
+										$conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+										 
+											return $resultat;
+														
+										} else{
+										
+											 return false;
+										}
+								}
+							function fx_SituationTranferts_Mensuel_Agence($CMois,$CYear,$idAgence){
+							//echo $idagence;
+							  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+										from mouvement,transfert 
+										where transfert.idmouv = mouvement.idmouv 
+										AND mouvement.type='envoi' 
+										AND transfert.EtatTransfert=1
+										AND mouvement.etatmouv=1
+										AND MONTH(mouvement.datemouv) = '".$CMois."'
+										AND	YEAR(mouvement.datemouv) = '".$CYear."'
+										AND  transfert.IdAgenceDst=".$idAgence."
+										group by transfert.Retirer, mouvement.codedevise";
+										//echo $requete;
+										$conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+										 
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+										}
+								}
+
+								function fx_SituationTranferts_Mensuel_Agence_Limites($DateDeb,$DateLimite,$idAgence){
+							//echo $idagence;
+							  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+										from mouvement,transfert 
+										where transfert.idmouv = mouvement.idmouv 
+										AND mouvement.type='envoi' 
+										AND transfert.EtatTransfert=1
+										AND mouvement.etatmouv=1
+										AND DATE(mouvement.datemouv) BETWEEN('".$DateLimite."') AND ('".$DateDeb."') 
+										AND  transfert.IdAgenceDst='".$idAgence."'
+										group by transfert.Retirer, mouvement.codedevise";
+										//echo $requete;
+										$conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+										 
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+										}
+								}
+							
+							function fx_SituationTranferts_Annuel($CYear){
+							//echo $idagence;
+							  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+										from mouvement,transfert 
+										where transfert.idmouv = mouvement.idmouv 
+										AND mouvement.type='envoi' 
+										AND transfert.EtatTransfert=1
+										AND mouvement.etatmouv=1
+										AND	YEAR(mouvement.datemouv) = '2017'
+										group by transfert.Retirer, mouvement.codedevise";
+										//echo $requete;
+										$conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+										 
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+										}
+								}
+							function fx_SituationTranferts_Annuel_Limite($CYear,$DateLimite){
+							//echo $idagence;
+							  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+										from mouvement,transfert 
+										where transfert.idmouv = mouvement.idmouv 
+										AND mouvement.type='envoi' 
+										AND transfert.EtatTransfert=1
+										AND mouvement.etatmouv=1
+										AND	YEAR(mouvement.datemouv) = '".$CYear."'
+										AND DATE(datemouv)>'".$DateLimite."'
+										group by transfert.Retirer, mouvement.codedevise";
+										//echo $requete;
+										$conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+										 
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+										}
+								}
+						     function fx_SituationTranferts_Annuel_Agence($CYear,$idAgence){
+							//echo $idagence;
+							  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+										from mouvement,transfert 
+										where transfert.idmouv = mouvement.idmouv 
+										AND mouvement.type='envoi' 
+										AND transfert.EtatTransfert=1
+										AND mouvement.etatmouv=1
+										AND	YEAR(mouvement.datemouv) = '".$CYear."'
+										AND  transfert.IdAgenceDst=".$idAgence."
+										group by transfert.Retirer, mouvement.codedevise";
+										//echo $requete;
+										$conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+										 
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+										}
+								}
+								
+								function fx_SituationTranferts_Annuel_Agence_Limite($CYear,$idAgence,$DateLimite){
+								//echo $idagence;
+								  $requete="select sum(mouvement.montant) as Total,transfert.Retirer,mouvement.codedevise
+											from mouvement,transfert 
+											where transfert.idmouv = mouvement.idmouv 
+											AND mouvement.type='envoi' 
+											AND transfert.EtatTransfert=1
+											AND mouvement.etatmouv=1
+											AND	YEAR(mouvement.datemouv) = '".$CYear."'
+											AND  transfert.IdAgenceDst=".$idAgence."
+											AND DATE(datemouv)>'".$DateLimite."'
+											group by transfert.Retirer, mouvement.codedevise";
+											//echo $requete;
+											$conn=new connect();// preperation de la conexion
+											  $resultat=$conn-> fx_lecture($requete);
+											 if ($resultat){
+											 
+															return $resultat;
+															
+											} else{
+											
+												 return false;
+											}
+									}
+									
+									///Action Groupe pour superviseur
+									
+									function fx_EnregistrerActionGroupe($montant,$etatmouv,$type,$sens,$codedevise,$idGroupe,$idagent){   
+
+										  //Création de la Requete 
+										  $requete='insert into actiongroupe (datemouvg,montantg,etatmouvg,typeg,sensg,codedevise,idGroupe,idagent) values(CURRENT_TIMESTAMP,"'. $montant.'","'. $etatmouv.'","'. $type.'","'. $sens.'","'. $codedevise.'","'. $idGroupe.'","'. $idagent.'")';
+										 $conn=new connect();// preperation de la conexion
+										 $resultat=$conn -> fx_ecriture($requete);// execution de la requete
+										 if ($resultat){
+											return $resultat;
+										 }
+										 else{
+											return false;
+										 }
+											  
+									 }
+									 
+									 function fx_ChangementEtatActionGroupe($idmouvg,$etatmouv){
+										$requete="update actiongroupe set etatmouvg=".$etatmouv." where idmouvg=".$idmouvg;
+										echo $requete; 
+										$conn=new connect();// preperation de la conexion
+										$resultat=$conn-> fx_modifier($requete);
+										
+										if($resultat){
+											return $resultat;
+										}else{
+											return false;
+										}
+									}
+									
+									function fx_RapportMouvement_groupe($Cdate,$IdGroupe){
+									  $requete="select sum(actiongroupe.montantg) as total, actiongroupe.typeg, actiongroupe.sensg, codedevise
+												from actiongroupe,groupe
+												where groupe.IdGroupe = actiongroupe.IdGroupe
+												AND actiongroupe.IdGroupe=".$IdGroupe."
+												AND DATE(actiongroupe.datemouvg)='".$Cdate."'
+												AND actiongroupe.etatmouvg=1
+												group by actiongroupe.typeg, actiongroupe.sensg, actiongroupe.codedevise";
+												//echo "<br/><br/><br/><br/>".$requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+													return $resultat;
+												} else{
+													 return false;
+												}
+										}
+									
+									function fx_RM_Journalier_groupe($Cdate,$idgroupe,$sens,$devise){
+										//echo $idagence;
+									  $requete="select sum(montantg) as total
+												from actiongroupe
+												where  actiongroupe.IdGroupe=".$idgroupe." 
+												AND DATE(datemouvg)<'".$Cdate."' 
+												AND sensg='".$sens."'
+												AND codedevise='".$devise."'
+												AND actiongroupe.etatmouvg=1
+												order by datemouvg";
+												//echo "<br/><br/><br/><br/>".$requete;
+												$conn=new connect();// preperation de la conexion
+												  $resultat=$conn-> fx_lecture($requete);
+												 if ($resultat){
+												 
+																return $resultat;
+																
+												} else{
+												
+													 return false;
+											}
+										}
+						function fx_ListeMouvGroupeFin($Cdate,$IdGroupe){
+										  $requete="select financementgroupe.IdFinanceGroupe,
+														   financementgroupe.motif,
+														   financementgroupe.EtatFinanceGroupe,
+														   financementgroupe.idmouvg,
+														   financementgroupe.TypeFin,
+														   financementgroupe.Benef,
+														   actiongroupe.idmouvg,
+														   actiongroupe.montantg,
+														   actiongroupe.datemouvg,
+														   actiongroupe.codedevise,
+														   actiongroupe.IdGroupe,
+														   actiongroupe.typeg,
+														   agent.idagent,
+														   agent.nom,
+														   agent.prenom
+														   
+													from financementgroupe,actiongroupe,agent
+													where financementgroupe.idmouvg = actiongroupe.idmouvg
+													AND	  agent.idagent = actiongroupe.idagent
+													AND actiongroupe.IdGroupe=".$IdGroupe."
+													AND DATE(actiongroupe.datemouvg)='".$Cdate."'
+													AND actiongroupe.etatmouvg=1
+													order by actiongroupe.datemouvg
+													
+													";
+													//echo "<br/><br/><br/><br/>".$requete;
+													 // echo $requete; 
+										  $conn=new connect();// preperation de la conexion
+										  $resultat=$conn-> fx_lecture($requete);
+										 if ($resultat){
+														
+														return $resultat;
+														
+										} else{
+										
+											 return false;
+									}
+									}
+							
+						
+
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						function fx_CreerFinancement($Motif,$IdMouv,$DateHeure,$IdAgence,$EtatFinancement){
+										 //insertion transfert
+										 $requete='insert into financement(Motif,IdMouv,DateHeure,IdAgence,EtatFinancement) values("'.$Motif.'","'.$IdMouv.'",CURRENT_TIMESTAMP,"'.$IdAgence.'",1)';
+										 echo $requete;
+										$conn=new connect();
+										$resultat=$conn-> fx_ecriture($requete);
+										if($resultat){
+										  return $resultat;
+										}else{
+										return false;
+										}
+																								  
+						}
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						function fx_CreerVirement($IdMouv,$IdFinancement,$EtatVirement){
+										 //insertion transfert
+										 $requete='insert into virement(IdMouv,IdFinancement,EtatVirement) values("'.$IdMouv.'","'.$IdFinancement.'",1)';
+										 
+										$conn=new connect();
+										$resultat=$conn-> fx_ecriture($requete);
+										if($resultat){
+										  return $resultat;
+										}else{
+										return false;
+										}
+																								  
+						}
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						function fx_CreerDepense($Motif,$IdMouv,$EtatDep){
+										 //insertion transfert
+										 $requete='insert into depense(Motif,IdMouv,EtatDep) values("'.$Motif.'","'.$IdMouv.'",1)';
+										 
+										$conn=new connect();
+										$resultat=$conn-> fx_ecriture($requete);
+										if($resultat){
+										  return $resultat;
+										}else{
+										return false;
+										}
+																								  
+						}
+						/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						function fx_EnregistrerConcerner($idmouv,$idconversion,$Taux){   
+			
+					  $this->IdMouv=$idmouv;
+					  $this->IdConversion=$idconversion;
+					 
+					  $requete='insert into concerner_Change(idmouv,idconversion,TauxChange) values("'. $this->IdMouv.'","'.$this->IdConversion.'",'.$Taux.')';
+						echo $requete;
+					 $conn=new connect();// preperation de la conexion
+					 $resultat=$conn -> fx_ecriture($requete);// execution de la requete
+					 if ($resultat){
+						return $resultat;
+					 }
+					 else{
+						return false;
+						}
+				}
+				///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				function fx_EnregistrerConversion($sensconv,$EtatConv){   
+			
+					  $this->SensConv=$sensconv;
+					  $this->etatConv=$EtatConv;
+					 
+				  
+				  //Création de la Requete 
+					$requete='insert into conversion(sensconv,EtatConv) values("'. $this->SensConv.'","'.$this->etatConv.'")';
+
+       // echo $requete; 
+				   //insertion des information dans la base de donnees ou preparation de la requete
+				 $conn=new connect();// preperation de la conexion
+		         $resultat=$conn -> fx_ecriture($requete);// execution de la requete
+				 if ($resultat){
+								return $resultat;
+				 }
+				 else{
+						return false;
+				 }//teste de la conexion
+				 
+				 //echo $requete;
+						  
+				 }
+				 
+				 //Création de la fonction Modifier Conversion
+				  function fx_ModifierConversion($idconversion,$sensconv){
+				   $this->IdConversion=$idconversion;
+				   $this->SensConv=$sensconv;
+				 
+				 
+				  $requete="update conversion set idconversion='".$this->IdConversion."',sensconv='".$this->SensConv."' where idconversion='".$this->IdConversion."' where idconversion='".$this->IdConversion."'  limit 1";
+				  $conn=new connect();// preperation de la conexion
+		 		  $resultat=$conn-> fx_modifier($requete);
+				  }
+				  
+				  //Création de la fonction Changement Etat Conversion
+			function fx_ChangementEtatConversion($idconversion,$EtatConv){
+				  $this->IdConversion=$idconversion;
+				  $this->ETA=$EtatConv;
+				$requete="update conversion set EtatConv='".$this->ETA."' where idconversion='".$this->IdConversion."' ";
+				$conn=new connect();// preperation de la conexion
+				$resultat=$conn-> fx_modifier($requete);
+			}
+			}
+			
+			
+?>
